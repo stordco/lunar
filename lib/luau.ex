@@ -1,18 +1,19 @@
 defmodule Luau do
   @moduledoc """
-  Documentation for `Luau`.
+  Let's get this party started!
   """
 
-  @doc """
-  Hello world.
+  alias Luau.Runtime
 
-  ## Examples
+  @spec initialize(Keyword.t()) :: Runtime.t()
+  def initialize(args) do
+    Runtime.initialize(args)
+  end
 
-      iex> Luau.hello()
-      :world
+  @spec execute(Runtime.t(), String.t()) :: {any(), Runtime.t()}
+  def execute(runtime, lua) do
+    {res, new_state} = :luerl.do(lua, runtime.state)
 
-  """
-  def hello do
-    :world
+    {res, %{runtime | state: new_state}}
   end
 end

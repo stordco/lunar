@@ -1,11 +1,16 @@
-# Luau
+# Lūʻau
 
-**TODO: Add description**
+Welcome to the Lua Lūʻau! 
+
+## What's in a name?
+
+In ancient Hawaii, there were strict rules about who could eat together and what they could eat.
+However, in 1819, King Kamehameha II abolished the religious laws and broke the taboos by eating with women marking the end of the kapu (taboo) system.
+From this symbolic act were born the lūʻau parties.
+
+Taking inspiration from King Kamehameha II's symbolic act of ending the kapu system we'll explore the power of Lua to break down taboos and unleash new possibilities.
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `luau` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -14,8 +19,3 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/luau>.
-

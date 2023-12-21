@@ -22,6 +22,7 @@ defmodule Luau.MixProject do
   defp deps do
     [
       {:luerl, github: "rvirding/luerl", branch: "develop"},
+      {:nanoid, "~> 2.1.0"},
 
       # Dev & Test dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
