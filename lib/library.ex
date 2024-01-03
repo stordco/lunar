@@ -67,7 +67,7 @@ defmodule Luau.Library do
     {func, _line, _args} = call
 
     # credo:disable-for-next-line
-    wrapped_func = String.to_atom("lua_wrapped_#{func}")
+    wrapped_func = String.to_atom("__wrapped_#{func}")
 
     quote do
       @lua_functions {unquote(func), unquote(wrapped_func)}
