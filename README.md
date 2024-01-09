@@ -12,6 +12,7 @@ Taking inspiration from King Kamehameha II's symbolic act of ending the kapu sys
 
 ## Installation
 
+<!-- {x-release-please-start-version} -->
 ```elixir
 def deps do
   [
@@ -19,3 +20,4 @@ def deps do
   ]
 end
 ```
+<!-- {x-release-please-end} -->
