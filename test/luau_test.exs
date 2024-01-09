@@ -1,35 +1,11 @@
 defmodule LuauTest do
   use ExUnit.Case
 
-  defmodule AdderLibrary do
-    use Luau.Library, scope: "Adder"
-
-    deflua add(a, b) do
-      a + b
-    end
-  end
-
-  defmodule EvenLibrary do
-    use Luau.Library, scope: "Even"
-
-    deflua is_even(value) do
-      rem(value, 2) == 0
-    end
-  end
-
-  describe "init/0" do
-    test "returns a luau containing the Lua state and unique id" do
-      assert %Luau{id: id, state: state} = Luau.init()
-      assert is_binary(id)
-      refute is_nil(state)
-    end
+  setup do
+    {:ok, luau: Luau.init()}
   end
 
   describe "set_variable/3" do
-    setup do
-      {:ok, luau: Luau.init()}
-    end
-
     test "sets a variable", %{luau: luau} do
       name = ["name"]
       value = "Robert"
@@ -44,29 +20,12 @@ defmodule LuauTest do
   end
 
   describe "load_module!/2" do
-    setup do
-      {:ok, luau: Luau.init()}
-    end
-
-    test "load a Luau.Library to the lua luau", %{luau: luau} do
-      assert %Luau{modules: [EvenLibrary, AdderLibrary]} =
-               loaded_luau = luau |> Luau.load_module!(AdderLibrary) |> Luau.load_module!(EvenLibrary)
-
-      script = """
-      local a = Adder.add(3,3)
-      local b = Even.is_even(a)
-      return b
-      """
-
-      assert {:ok, [true], _luau} = Luau.run(loaded_luau, script)
+    test "load a Luau.Library to the luau", %{luau: luau} do
+      assert %Luau{modules: [Math]} = Luau.load_module!(luau, Math)
     end
   end
 
   describe "load_lua!/2" do
-    setup do
-      {:ok, luau: Luau.init()}
-    end
-
     test "raises an error for missing files", %{luau: luau} do
       assert_raise RuntimeError, fn ->
         Luau.load_lua!(luau, "missing.lua")
@@ -75,16 +34,21 @@ defmodule LuauTest do
 
     test "loads simple lua script into luau", %{luau: luau} do
       path = Path.join([__DIR__, "support", "hello.lua"])
-      assert %Luau{lua_files: [^path]} = loaded_luau = Luau.load_lua!(luau, path)
+      assert %Luau{lua_files: [^path]} = Luau.load_lua!(luau, path)
+    end
+  end
 
-      script = """
-      return hello("Robert")
-      """
+  describe "run/2" do
+    test "evaluates lua script and returns the result", %{luau: luau} do
+      path = Path.join([__DIR__, "support", "hello.lua"])
 
-      assert {:ok, ["Hello Robert!"], _luau} = Luau.run(loaded_luau, script)
+      assert {:ok, ["Hello Robert!"], _luau} =
+               luau
+               |> Luau.load_lua!(path)
+               |> Luau.run("return hello('Robert')")
     end
 
-    test "loads lua module into luau", %{luau: luau} do
+    test "supports multiple return values", %{luau: luau} do
       path = Path.join([__DIR__, "support", "enum.lua"])
 
       assert {:ok, %Luau{lua_files: [^path]} = loaded_luau} =
@@ -100,6 +64,25 @@ defmodule LuauTest do
       """
 
       assert {:ok, [false, true], _luau} = Luau.run(loaded_luau, script)
+    end
+
+    test "supports running with state modified by another run", %{luau: luau} do
+      {:ok, luau} =
+        luau
+        |> Luau.load_module!(Math)
+        |> Luau.set_variable("numbers", [1, 2, 3])
+
+      # We don't use `local` within these tests intentionally
+      {:ok, _, luau} = Luau.run(luau, "size = #numbers")
+
+      script = """
+      double_size = Math.add(size, size)
+      return double_size
+      """
+
+      {:ok, [6], luau} = Luau.run(luau, script)
+
+      {:ok, [5], _luau} = Luau.run(luau, "return Math.sub(double_size, 1)")
     end
   end
 end
