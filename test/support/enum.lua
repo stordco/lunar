@@ -10,4 +10,14 @@ function E.any(values, callback)
   return false
 end
 
+function E.all(values, callback)
+  for i, v in ipairs(values) do
+    if not callback(v) then
+      return false
+    end
+  end
+
+  return true
+end
+
 Enum = E

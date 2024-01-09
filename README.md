@@ -1,6 +1,6 @@
 # Lūʻau
 
-Welcome to the Lua Lūʻau! 
+Welcome to the Lua Lūʻau!
 
 ## What's in a name?
 
