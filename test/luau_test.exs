@@ -12,9 +12,9 @@ defmodule LuauTest do
     end
   end
 
-  describe "initialize/1" do
+  describe "init/0" do
     test "returns a runtime" do
-      assert %Luau.Runtime{} = Luau.initialize([])
+      assert %Luau.Runtime{} = Luau.init()
     end
   end
 

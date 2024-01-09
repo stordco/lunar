@@ -5,15 +5,12 @@ defmodule Luau do
 
   alias Luau.Runtime
 
-  @spec initialize(Keyword.t()) :: Runtime.t()
-  def initialize(args) do
-    Runtime.initialize(args)
+  @spec init() :: Runtime.t()
+  def init do
+    Runtime.init()
   end
 
-  @spec execute(Runtime.t(), String.t()) :: {any(), Runtime.t()}
-  def execute(runtime, lua) do
-    {res, new_state} = :luerl.do(lua, runtime.state)
-
-    {res, %{runtime | state: new_state}}
+  def run(runtime, lua) do
+    Runtime.run(runtime, lua)
   end
 end

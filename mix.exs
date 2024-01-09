@@ -11,6 +11,7 @@ defmodule Luau.MixProject do
     ]
   end
 
+  # Path.join([:code.priv_dir(:sidecar), "lua", name])
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
@@ -21,7 +22,7 @@ defmodule Luau.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:luerl, github: "rvirding/luerl", branch: "develop"},
+      {:luerl, "~> 1.1"},
       {:nanoid, "~> 2.1.0"},
 
       # Dev & Test dependencies

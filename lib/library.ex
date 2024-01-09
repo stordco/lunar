@@ -77,7 +77,7 @@ defmodule Luau.Library do
 
       def unquote(wrapped_func)(_arity, args, state) do
         res = apply(__MODULE__, unquote(func), args)
-        {:ok, state}
+        {[res], state}
       end
     end
   end

@@ -3,59 +3,82 @@ defmodule Luau.RuntimeTest do
 
   alias Luau.Runtime
 
-  defmodule BarLibrary do
-    use Luau.Library, scope: "bar"
+  defmodule AdderLibrary do
+    use Luau.Library, scope: "Adder"
+
+    deflua add(a, b) do
+      a + b
+    end
   end
 
-  defmodule FooLibrary do
-    use Luau.Library, scope: "foo"
+  defmodule EvenLibrary do
+    use Luau.Library, scope: "Even"
+
+    deflua is_even(value) do
+      rem(value, 2) == 0
+    end
   end
 
-  describe "initialize/0" do
+  describe "init/0" do
     test "returns a runtime containing the Lua state and unique id" do
-      assert %Runtime{id: id, state: state} = Runtime.initialize()
+      assert %Runtime{id: id, state: state} = Runtime.init()
       assert is_binary(id)
       refute is_nil(state)
     end
   end
 
-  describe "initialize/1" do
-    test "accepts `:libraries` as an option" do
-      assert %Runtime{libraries: [BarLibrary]} = Runtime.initialize(libraries: [BarLibrary])
-    end
-
-    test "accepts `:variables` as an option" do
-      assert %Runtime{} = Runtime.initialize(variables: %{name: "Robert"})
-    end
-  end
-
   describe "set_variable/3" do
     setup do
-      runtime = Runtime.initialize()
-
-      {:ok, runtime: runtime}
+      {:ok, runtime: Runtime.init()}
     end
 
     test "sets a variable", %{runtime: runtime} do
+      name = ["name"]
+      value = "Robert"
+      assert {:ok, %Runtime{variables: %{^name => ^value}}} = Runtime.set_variable(runtime, name, value)
+    end
+
+    test "wraps variable path as necessary", %{runtime: runtime} do
       name = "name"
       value = "Robert"
 
-      assert %Runtime{variables: %{^name => ^value}} = Runtime.set_variable(runtime, name, value)
+      assert {:ok, %Runtime{variables: %{[^name] => ^value}}} = Runtime.set_variable(runtime, name, value)
     end
   end
 
-  describe "add_library/2" do
+  describe "load_module!/2" do
     setup do
-      runtime = Runtime.initialize()
-
-      {:ok, runtime: runtime}
+      {:ok, runtime: Runtime.init()}
     end
 
-    test "adds a library to the lua runtime", %{runtime: runtime} do
-      assert %Runtime{libraries: [FooLibrary, BarLibrary]} =
-               runtime
-               |> Runtime.add_library(BarLibrary)
-               |> Runtime.add_library(FooLibrary)
+    test "load a Luau.Library to the lua runtime", %{runtime: runtime} do
+      assert %Runtime{modules: [EvenLibrary, AdderLibrary]} =
+               loaded_runtime = runtime |> Runtime.load_module!(AdderLibrary) |> Runtime.load_module!(EvenLibrary)
+
+      script = """
+      local a = Adder.add(3,3)
+      local b = Even.is_even(a)
+      return b
+      """
+
+      assert {:ok, [true], _runtime} = Runtime.run(loaded_runtime, script)
+    end
+  end
+
+  describe "load_lua!/2" do
+    setup do
+      {:ok, runtime: Runtime.init()}
+    end
+
+    test "loads simple lua script into runtime", %{runtime: runtime} do
+      path = Path.join([__DIR__, "support", "hello.lua"])
+      assert %Runtime{lua: [^path]} = loaded_runtime = Runtime.load_lua!(runtime, path)
+
+      script = """
+      return hello("Robert")
+      """
+
+      assert {:ok, ["Hello Robert!"], _runtime} = Runtime.run(loaded_runtime, script)
     end
   end
 end
