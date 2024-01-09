@@ -17,11 +17,22 @@ defmodule Luau do
   @type result :: {:ok, t()}
   @type error :: {:error, atom() | String.t()}
 
+  @doc """
+  Initialize a new Luau
+  """
   @spec init() :: Luau.t()
   def init do
     %Luau{id: Nanoid.generate(), state: Luerl.init()}
   end
 
+  @doc """
+  Encodes an Elixir value and makes it available at the key/path.
+
+  # Examples
+
+    iex> luau = Luau.init()
+    iex> luau = Luau.set_variable(luau, "a", 1)
+  """
   @spec set_variable(Luau.t(), [String.t()] | String.t(), any()) :: result | error
   def set_variable(luau, key, value) do
     key = List.wrap(key)
@@ -35,12 +46,23 @@ defmodule Luau do
     end
   end
 
+  @doc """
+  Load a Luau.Library into state.
+
+  # Examples
+
+    iex> luau = Luau.init()
+    iex> luau = Luau.load_module!(luau, Math)
+  """
   @spec load_module!(Luau.t(), Luau.Library.t()) :: Luau.t()
   def load_module!(luau, module) do
     new_state = Luerl.load_module_dec(luau.state, [module.scope()], module)
     %{luau | state: new_state, modules: [module | luau.modules]}
   end
 
+  @doc """
+  Load Lua code into state from file.
+  """
   @spec load_lua!(Luau.t(), String.t()) :: Luau.t()
   def load_lua!(luau, path) do
     case Luerl.dofile(luau.state, String.to_charlist(path)) do
@@ -52,6 +74,16 @@ defmodule Luau do
     end
   end
 
+  @doc """
+  Evaluate Lua code within a given Luau
+    
+  # Examples
+
+    iex> luau = Luau.init()
+    iex> luau = Luau.load_module!(luau, Math)
+    iex> {:ok, luau} = Luau.set_variable(luau, a, 1)
+    iex> {:ok, [10], _luau} = Luau.run(luau, "return Math.add(a, 9)")
+  """
   @spec run(Luau.t(), String.t()) :: {:ok, any(), Luau.t()} | error
   def run(luau, lua) do
     case Luerl.do(luau.state, lua) do
