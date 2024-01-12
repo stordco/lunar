@@ -1,9 +1,9 @@
-defmodule Luau.MixProject do
+defmodule Lunar.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :luau,
+      app: :lunar,
       deps: deps(),
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),

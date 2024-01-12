@@ -1,5 +1,5 @@
 defmodule Math do
-  use Luau.Library, scope: "Math"
+  use Lunar.Library, scope: "Math"
 
   deflua add(a, b) do
     a + b

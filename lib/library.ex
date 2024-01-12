@@ -1,17 +1,17 @@
-defmodule Luau.Library do
+defmodule Lunar.Library do
   @moduledoc """
     Defines a library that will extend the Lua runtime.
 
     ## Example usage
 
       defmodule MyLibrary do
-        use Luau.Library, scope: "my_library"
+        use Lunar.Library, scope: "my_library"
 
         deflua hello(name) do
           "Hello, \#{name}!"
         end
       end
-    
+
     In our Lua code, we can now call `my_library.hello("Robert")` and get back `"Hello, Robert!"`.
   """
   @type t :: __MODULE__
@@ -29,25 +29,25 @@ defmodule Luau.Library do
 
       Module.register_attribute(__MODULE__, :lua_functions, accumulate: true, persist: true)
 
-      import Luau.Library, only: [deflua: 2]
+      import Lunar.Library, only: [deflua: 2]
 
       @before_compile unquote(__MODULE__)
 
-      @behaviour Luau.Library
+      @behaviour Lunar.Library
 
-      @impl Luau.Library
+      @impl Lunar.Library
       def install(luerl_state) do
         :luerl_heap.alloc_table(table(), luerl_state)
       end
 
-      @impl Luau.Library
+      @impl Lunar.Library
       def scope, do: unquote(scope)
     end
   end
 
   defmacro __before_compile__(_) do
     quote do
-      @impl Luau.Library
+      @impl Lunar.Library
       def table do
         functions =
           :functions
