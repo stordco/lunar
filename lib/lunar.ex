@@ -18,11 +18,23 @@ defmodule Lunar do
   @type error :: {:error, atom() | String.t()}
 
   @doc """
-  Initialize a new Lunar
+  Initialize a new Lunar runtime
   """
   @spec init() :: Lunar.t()
   def init do
+    :telemetry.execute([:lunar, :init], %{count: 1}, %{})
     %Lunar{id: Nanoid.generate(), state: Luerl.init()}
+  end
+
+  @doc """
+  A convenience function for copying a Lunar runtime and setting a new `id`
+  """
+  def clone(lunar) do
+    new_id = Nanoid.generate()
+
+    :telemetry.execute([:lunar, :clone], %{count: 1}, %{})
+
+    %{lunar | id: new_id}
   end
 
   @doc """
@@ -39,6 +51,11 @@ defmodule Lunar do
 
     case Luerl.set_table_keys_dec(lunar.state, key, value) do
       {:ok, _result, new_state} ->
+        :telemetry.execute([:lunar, :set_variable], %{count: 1}, %{
+          key: key,
+          value: value
+        })
+
         {:ok, %{lunar | state: new_state, variables: Map.put(lunar.variables, key, value)}}
 
       {:lua_error, reason, _state} ->
@@ -56,6 +73,11 @@ defmodule Lunar do
   """
   @spec load_module!(Lunar.t(), Lunar.Library.t()) :: Lunar.t()
   def load_module!(lunar, module) do
+    :telemetry.execute([:lunar, :load_module!], %{count: 1}, %{
+      scope: module.scope(),
+      module_name: module
+    })
+
     new_state = Luerl.load_module_dec(lunar.state, [module.scope()], module)
     %{lunar | state: new_state, modules: [module | lunar.modules]}
   end
@@ -67,6 +89,8 @@ defmodule Lunar do
   def load_lua!(lunar, path) do
     case Luerl.dofile(lunar.state, String.to_charlist(path)) do
       {:ok, _result, new_state} ->
+        :telemetry.execute([:lunar, :load_lua!], %{count: 1}, %{path: path})
+
         %{lunar | state: new_state, lua_files: [path | lunar.lua_files]}
 
       :error ->
@@ -86,12 +110,31 @@ defmodule Lunar do
   """
   @spec run(Lunar.t(), String.t()) :: {:ok, any(), Lunar.t()} | error
   def run(lunar, lua) do
+    :telemetry.span(
+      [:lunar, :run],
+      %{},
+      fn ->
+        result = run_lunar(lunar, lua)
+        {result, %{}}
+      end
+    )
+  end
+
+  defp run_lunar(lunar, lua) do
     case Luerl.do(lunar.state, lua) do
       {:ok, result, new_state} ->
+        :telemetry.execute([:lunar, :run, :success], %{count: 1}, %{})
+
         {:ok, result, %{lunar | state: new_state}}
 
       {:error, reason, _state} ->
+        :telemetry.execute([:lunar, :run, :failure], %{count: 1}, %{
+          reason: parse_luerl_error(reason)
+        })
+
         {:error, reason}
     end
   end
+
+  defp parse_luerl_error([{line_no, type, reason}]), do: "line #{line_no}: #{type} #{reason}"
 end

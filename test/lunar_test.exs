@@ -5,6 +5,84 @@ defmodule LunarTest do
     {:ok, lunar: Lunar.init()}
   end
 
+  describe ":telemetry" do
+    setup do
+      _ref =
+        :telemetry_test.attach_event_handlers(self(), [
+          [:lunar, :init],
+          [:lunar, :clone],
+          [:lunar, :deflua, :invocation],
+          [:lunar, :load_lua!],
+          [:lunar, :load_module!],
+          [:lunar, :run, :failure],
+          [:lunar, :run, :success],
+          [:lunar, :run],
+          [:lunar, :set_variable]
+        ])
+
+      :ok
+    end
+
+    test "emits [:lunar, :init]" do
+      Lunar.init()
+      assert_receive {[:lunar, :init], _ref, %{count: 1}, %{}}
+    end
+
+    test "emits [:lunar, :clone]", %{lunar: lunar} do
+      Lunar.clone(lunar)
+      assert_receive {[:lunar, :clone], _ref, %{count: 1}, %{}}
+    end
+
+    test "emits [:lunar, :set_variable]", %{lunar: lunar} do
+      Lunar.set_variable(lunar, :foo, "bar")
+      assert_receive {[:lunar, :set_variable], _ref, %{count: 1}, %{key: [:foo], value: "bar"}}
+    end
+
+    test "emits [:lunar, :load_module!]", %{lunar: lunar} do
+      Lunar.load_module!(lunar, Math)
+      assert_receive {[:lunar, :load_module!], _ref, %{count: 1}, %{scope: "Math", module_name: Math}}
+    end
+
+    test "emits [:lunar, :load_lua!]", %{lunar: lunar} do
+      path = Path.join([__DIR__, "support", "hello.lua"])
+      Lunar.load_lua!(lunar, path)
+      assert_receive {[:lunar, :load_lua!], _ref, %{count: 1}, %{path: ^path}}
+    end
+
+    @tag capture_log: false
+    test "emits [:lunar, :run, :success]", %{lunar: lunar} do
+      Lunar.run(lunar, "return true")
+      assert_receive {[:lunar, :run, :success], _ref, %{count: 1}, %{}}
+    end
+
+    test "emits [:lunar, :run, :failure]", %{lunar: lunar} do
+      # Results in a syntax error
+      Lunar.run(lunar, "1+1=2")
+
+      assert_receive {[:lunar, :run, :failure], _ref, %{count: 1},
+                      %{reason: "line 1: luerl_parse syntax error before: 1"}}
+    end
+
+    test "emits [:lunar, :deflua, :invocation]", %{lunar: lunar} do
+      script = """
+      return Math.sub(2, 1)
+      """
+
+      lunar
+      |> Lunar.load_module!(Math)
+      |> Lunar.run(script)
+
+      assert_receive {[:lunar, :deflua, :invocation], _ref, %{count: 1},
+                      %{args: [2, 1], function_name: :sub, scope: "Math", module_name: Math}}
+    end
+  end
+
+  describe "clone/1" do
+    test "sets a new `id`", %{lunar: lunar} do
+      assert lunar.id != Lunar.clone(lunar).id
+    end
+  end
+
   describe "set_variable/3" do
     test "sets a variable", %{lunar: lunar} do
       name = ["name"]

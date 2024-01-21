@@ -26,6 +26,7 @@ defmodule Lunar.MixProject do
     [
       {:luerl, "~> 1.1"},
       {:nanoid, "~> 2.1.0"},
+      {:telemetry, ">= 1.0.0"},
 
       # Dev & Test dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},

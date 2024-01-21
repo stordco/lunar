@@ -76,6 +76,13 @@ defmodule Lunar.Library do
       end
 
       def unquote(wrapped_func)(_arity, args, state) do
+        :telemetry.execute([:lunar, :deflua, :invocation], %{count: 1}, %{
+          args: args,
+          function_name: unquote(func),
+          scope: __MODULE__.scope(),
+          module_name: __MODULE__
+        })
+
         res = apply(__MODULE__, unquote(func), args)
         {[res], state}
       end
