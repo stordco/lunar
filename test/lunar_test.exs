@@ -49,7 +49,6 @@ defmodule LunarTest do
       assert_receive {[:lunar, :load_lua!], _ref, %{count: 1}, %{path: ^path}}
     end
 
-    @tag capture_log: false
     test "emits [:lunar, :run, :success]", %{lunar: lunar} do
       Lunar.run(lunar, "return true")
       assert_receive {[:lunar, :run, :success], _ref, %{count: 1}, %{}}
