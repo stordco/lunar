@@ -1,4 +1,6 @@
 {
+  "$comment": "This file is synced with stordco/common-config-elixir. Any changes will be overwritten.",
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "changelog-sections": [
     {
       "type": "feat",
@@ -16,6 +18,8 @@
       "hidden": false
     }
   ],
+  "draft": false,
+  "draft-pull-request": false,
   "packages": {
     ".": {
       "extra-files": [
@@ -30,4 +34,6 @@
     }
   ],
   "prerelease": false,
+  "pull-request-header": "An automated release has been created for you.",
+  "separate-pull-requests": true
 }
