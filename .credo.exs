@@ -24,7 +24,7 @@
         # In the latter case `**/*.{ex,exs}` will be used.
         #
         included: ["config/", "lib/", "priv/", "test/"],
-        excluded: [~r"/_build/", ~r"/deps/"]
+        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
       },
       #
       # Load and configure plugins here:
@@ -58,6 +58,11 @@
       #     {Credo.Check.Design.DuplicatedCode, false}
       #
       checks: [
+        #
+        ## Database Migration Checks
+        #
+        {ExcellentMigrations.CredoCheck.MigrationsSafety, []},
+
         #
         ## Consistency Checks
         #
@@ -114,7 +119,8 @@
          [
            order:
              ~w(moduledoc behaviour use import require alias module_attribute defstruct callback macrocallback optional_callback)a,
-           ignore: [:type]
+           ignore: [:type],
+           ignore_module_attributes: [:contract, :decorate, :operation, :trace]
          ]},
         {Credo.Check.Readability.StringSigils, []},
         {Credo.Check.Readability.TrailingBlankLine, []},
@@ -173,6 +179,16 @@
         {Credo.Check.Warning.UnusedRegexOperation, []},
         {Credo.Check.Warning.UnusedStringOperation, []},
         {Credo.Check.Warning.UnusedTupleOperation, []},
+
+        #
+        ## Custom
+        #
+        {Credo.Check.Warning.ForbiddenModule,
+         [
+           modules: [
+             {Oban.Worker, "use Oban.Pro.Worker instead"}
+           ]
+         ]}
       ]
     }
   ]
