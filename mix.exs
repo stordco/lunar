@@ -4,11 +4,13 @@ defmodule Lunar.MixProject do
   def project do
     [
       app: :lunar,
+      name: "Lunar",
       deps: deps(),
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      version: "0.1.0"
+      version: "0.1.0",
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -31,7 +33,8 @@ defmodule Lunar.MixProject do
       # Dev & Test dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.28", only: [:dev, :test], runtime: false}
+      {:ex_doc, "~> 0.28", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.17.1", only: :test}
     ]
   end
 end
