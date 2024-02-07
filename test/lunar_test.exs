@@ -96,6 +96,16 @@ defmodule LunarTest do
     end
   end
 
+  describe "get_variable/2" do
+    test "get a variable", %{lunar: lunar} do
+      name = "name"
+      value = "Robert"
+
+      {:ok, lunar} = Lunar.set_variable(lunar, name, value)
+      assert {:ok, ^value} = Lunar.get_variable(lunar, name)
+    end
+  end
+
   describe "load_module!/2" do
     test "load a Lunar.Library to the lunar", %{lunar: lunar} do
       assert %Lunar{modules: [Math]} = Lunar.load_module!(lunar, Math)
@@ -160,6 +170,14 @@ defmodule LunarTest do
       {:ok, [6], lunar} = Lunar.run(lunar, script)
 
       {:ok, [5], _lunar} = Lunar.run(lunar, "return Math.sub(double_size, 1)")
+    end
+
+    test "evaluates lua script and allow state changes to be accessed", %{lunar: lunar} do
+      {:ok, updated_lunar} = Lunar.set_variable(lunar, "name", "Robert")
+      assert {:ok, "Robert"} = Lunar.get_variable(updated_lunar, "name")
+
+      {:ok, _result, final_lunar} = Lunar.run(updated_lunar, "name = \"Steve\"")
+      assert {:ok, "Steve"} = Lunar.get_variable(final_lunar, "name")
     end
   end
 end
