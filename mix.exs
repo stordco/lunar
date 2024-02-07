@@ -42,7 +42,7 @@ defmodule Lunar.MixProject do
   defp package do
     [
       files: ~w(lib mix.exs .formatter.exs README.md CHANGELOG.md),
-      licenses: ["UNLICENSED"],
+      licenses: ["Apache-2.0"],
       links: %{
         Changelog: "https://github.com/stordco/lunar/releases",
         GitHub: "https://github.com/stordco/lunar"
