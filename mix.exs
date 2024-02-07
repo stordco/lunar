@@ -10,7 +10,8 @@ defmodule Lunar.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       version: "0.1.0",
-      test_coverage: [tool: ExCoveralls]
+      test_coverage: [tool: ExCoveralls],
+      package: package()
     ]
   end
 
@@ -35,6 +36,17 @@ defmodule Lunar.MixProject do
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.17.1", only: :test}
+    ]
+  end
+
+  defp package do
+    [
+      files: ~w(lib mix.exs .formatter.exs README.md CHANGELOG.md),
+      licenses: ["UNLICENSED"],
+      links: %{
+        Changelog: "https://github.com/stordco/lunar/releases",
+        GitHub: "https://github.com/stordco/lunar"
+      }
     ]
   end
 end
