@@ -6,7 +6,7 @@ defmodule Lunar.MixProject do
       app: :lunar,
       name: "Lunar",
       deps: deps(),
-      elixir: "~> 1.15",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       version: "1.0.0",
