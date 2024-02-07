@@ -124,7 +124,8 @@ jobs:
         run: mix format --check-formatted
 
   Test:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    name: Test (Elixir ${{ matrix.versions.elixir }} OTP ${{ matrix.versions.otp }})
+
     runs-on: ubuntu-latest
 
     env:
@@ -138,10 +139,12 @@ jobs:
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
         with:
+          elixir-version: ${{ matrix.versions.elixir }}
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           hex-token: ${{ secrets.HEX_API_KEY }}
           oban-fingerprint: ${{ secrets.OBAN_KEY_FINGERPRINT }}
           oban-token: ${{ secrets.OBAN_LICENSE_KEY }}
+          otp-version: ${{ matrix.versions.otp }}
 
       - name: Compile
         run: mix compile --warnings-as-errors
@@ -150,4 +153,15 @@ jobs:
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        versions:
+          - elixir: 1.13
+            otp: 25
+          - elixir: 1.14
+            otp: 25
+          - elixir: 1.15
+            otp: 26
 
