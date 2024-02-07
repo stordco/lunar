@@ -37,6 +37,21 @@ defmodule Lunar do
     %{lunar | id: new_id}
   end
 
+  @spec get_variable(Lunar.t(), [String.t()] | String.t()) :: result | error
+  def get_variable(lunar, key) do
+    key = List.wrap(key)
+
+    case Luerl.get_table_keys_dec(lunar.state, key) do
+      {:ok, value, _new_state} ->
+        :telemetry.execute([:lunar, :get_variable], %{count: 1}, %{key: key, value: value})
+
+        {:ok, value}
+
+      {:lua_error, reason, _state} ->
+        {:error, reason}
+    end
+  end
+
   @doc """
   Encodes an Elixir value and makes it available at the key/path.
 
