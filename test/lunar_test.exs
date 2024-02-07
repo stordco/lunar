@@ -90,9 +90,8 @@ defmodule LunarTest do
     end
 
     test "wraps variable path as necessary", %{lunar: lunar} do
-      name = "name"
       value = "Robert"
-      assert {:ok, %Lunar{variables: %{[^name] => ^value}}} = Lunar.set_variable(lunar, name, value)
+      assert {:ok, %Lunar{variables: %{["name"] => ^value}}} = Lunar.set_variable(lunar, "name", value)
     end
   end
 
