@@ -8,7 +8,7 @@ Experimental Elixir wrapper for luerl.
 ```elixir
 def deps do
   [
-    {:lunar, "~> 1.0.0"}
+    {:lunar, "~> 1.0.1"}
   ]
 end
 ```

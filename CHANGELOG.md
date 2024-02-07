@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/stordco/lunar/compare/v1.0.0...v1.0.1) (2024-02-07)
+
+
+### Miscellaneous
+
+* Sync files with stordco/common-config-elixir ([#9](https://github.com/stordco/lunar/issues/9)) ([4c9c41c](https://github.com/stordco/lunar/commit/4c9c41c8be9819f37efd7f021396a4f8ca1f8a44))
+
 ## 1.0.0 (2024-02-07)
 
 
