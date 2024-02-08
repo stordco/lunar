@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/stordco/lunar/compare/v1.0.1...v1.0.2) (2024-02-08)
+
+
+### Miscellaneous
+
+* Add description ([#11](https://github.com/stordco/lunar/issues/11)) ([44eba46](https://github.com/stordco/lunar/commit/44eba4642b02e40fc1b615d224fff17b357c0325))
+
 ## [1.0.1](https://github.com/stordco/lunar/compare/v1.0.0...v1.0.1) (2024-02-07)
 
 
