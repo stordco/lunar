@@ -5,6 +5,7 @@ defmodule Lunar.MixProject do
     [
       app: :lunar,
       name: "Lunar",
+      description: "A Lua runtime for Elixir built on Luerl",
       deps: deps(),
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
