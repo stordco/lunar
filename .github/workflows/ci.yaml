@@ -1,5 +1,6 @@
 # This file is synced with stordco/common-config-elixir. Any changes will be overwritten.
 
+
 name: CI
 
 on:
@@ -28,13 +29,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  Changed:
+    name: Changed Files
+    runs-on: ubuntu-latest
+
+    outputs:
+      database: ${{ steps.changed.outputs.database }}
+      docker: ${{ steps.changed.outputs.docker }}
+      # Note: temporarily disabling documentation/OpenAPI validation in CI until a long term solution is found
+      # documentation: ${{ steps.changed.outputs.documentation }}
+      elixir: ${{ steps.changed.outputs.elixir }}
+      helm: ${{ steps.changed.outputs.helm }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          fetch-depth: 2
+
+      - id: changed
+        name: Get Changed Files
+        run: |
+          # Using fetch-depth 2 above, we should always be able to get the full list of changes files:
+          # - In a pull-request, GHA merges the PR branch into main
+          # - When pushed to main, we always squash merge, so there is only one new commit
+
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
+
+          declare -A patterns
+          patterns["database"]=".github/workflows/ci.yaml priv/.*repo/.*"
+          patterns["docker"]=".github/workflows/ci.yaml Dockerfile"
+          patterns["documentation"]="docs/.* priv/documentation/.* .*.ex .*.md"
+          patterns["elixir"]=".github/workflows/ci.yaml .tool-versions mix.lock priv/.* .*.ex .*.exs .*.heex"
+          patterns["helm"]=".github/workflows/ci.yaml .github/workflows/staging.yaml .github/workflows/production.yaml helm/.*"
+
+          for filetype in ${!patterns[@]}; do
+            found="false"
+            echo "==> Checking: $filetype"
+            for pattern in ${patterns[$filetype]}; do
+              for changed_file in $CHANGED_FILES; do
+                if [[ "$changed_file" =~ $pattern ]]; then
+                  echo "====> Found change: $changed_file"
+                  found="true"
+                  break
+                fi
+              done
+              if [[ "$found" == "true" ]]; then
+                break
+              fi
+            done
+            echo "$filetype=$found" >> $GITHUB_OUTPUT
+          done
+
   Credo:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') && needs.Changed.outputs.elixir == 'true' }}
+    needs: [Changed]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -48,12 +102,16 @@ jobs:
         run: mix credo --strict
 
   Dependencies:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') && needs.Changed.outputs.elixir == 'true' }}
+    needs: [Changed]
     runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: test
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -67,12 +125,13 @@ jobs:
         run: mix deps.unlock --check-unused
 
   Dialyzer:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') && needs.Changed.outputs.elixir == 'true' }}
+    needs: [Changed]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -86,12 +145,16 @@ jobs:
         run: mix dialyzer --format github
 
   Documentation:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') && needs.Changed.outputs.documentation == 'true' }}
+    needs: [Changed]
     runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: test
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -102,15 +165,16 @@ jobs:
           oban-token: ${{ secrets.OBAN_LICENSE_KEY }}
 
       - name: Docs
-        run: mix docs
+        run: mix docs --warnings-as-errors
 
   Format:
-    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') && needs.Changed.outputs.elixir == 'true' }}
+    needs: [Changed]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -134,7 +198,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup Elixir
         uses: stordco/actions-elixir/setup@v1
@@ -150,18 +214,100 @@ jobs:
         run: mix compile --warnings-as-errors
 
       - name: Test
-        run: mix coveralls.github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mix coveralls.json --warnings-as-errors
+
+      - name: Upload coveralls artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-artifacts-elixir-${{ matrix.versions.elixir }}-otp-${{ matrix.versions.otp }}
+          path: cover/excoveralls.json
+          retention-days: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        versions:
+          - elixir: 1.14
+            otp: 25
+          - elixir: 1.15
+            otp: 26
+          - elixir: 1.17
+            otp: 26
+          - elixir: 1.18
+            otp: 25
+          - elixir: 1.18
+            otp: 26
+          - elixir: 1.18
+            otp: 27
+
+
+  Coveralls:
+    needs: [Test]
+    name: Coveralls (Elixir ${{ matrix.versions.elixir }} OTP ${{ matrix.versions.otp }})
+
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Coverall Artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: coverage-artifacts-elixir-${{ matrix.versions.elixir }}-otp-${{ matrix.versions.otp }}
+          path: cover
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+        with:
+          file: cover/excoveralls.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
     strategy:
       fail-fast: false
       matrix:
         versions:
-          - elixir: 1.13
-            otp: 25
           - elixir: 1.14
             otp: 25
           - elixir: 1.15
             otp: 26
+          - elixir: 1.17
+            otp: 26
+          - elixir: 1.18
+            otp: 25
+          - elixir: 1.18
+            otp: 26
+          - elixir: 1.18
+            otp: 27
+
+
+  Trivy_Filesystem:
+    if: ${{ !startsWith(github.head_ref, 'release-please--branches') }}
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+
+      - name: Setup Elixir
+        uses: stordco/actions-elixir/setup@v1
+        with:
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          hex-token: ${{ secrets.HEX_API_KEY }}
+          oban-fingerprint: ${{ secrets.OBAN_KEY_FINGERPRINT }}
+          oban-token: ${{ secrets.OBAN_LICENSE_KEY }}
+
+      - name: Trivy Scan
+        uses: stordco/actions-trivy@v1
+        with:
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          scan-type: fs
+          exclude-target-pattern: '^deps\/'
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel-id: ${{ secrets.SLACK_SECURITY_ALERTS }}
+          update-db: false
+
 
